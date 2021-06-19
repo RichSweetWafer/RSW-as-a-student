@@ -1,24 +1,2 @@
-# My-hobby-stuff
-This is an README file, if you don't know. I'm a newbie, so there will be no new information. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-For a while.....
+# RSW as a student
+Okay so here is the stuff I've done as a university student and that I'm more or less proud of. Or this is just a garbage can, lol.
