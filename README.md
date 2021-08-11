@@ -6,15 +6,15 @@ Okay so here is the stuff I've done as a university student and that I'm more or
 ## 1. [kmalloc]
 (https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L542)
 
-\/**
- * kmalloc - allocate memory
- * @size: how many bytes of memory are required.
- * @flags: the type of memory to allocate.
- *
- * kmalloc is the normal method of allocating memory
- * for objects smaller than page size in the kernel.
+/**
+ \* kmalloc - allocate memory
+ \* @size: how many bytes of memory are required.
+ \* @flags: the type of memory to allocate.
+ \*
+ \* kmalloc is the normal method of allocating memory
+ \* for objects smaller than page size in the kernel.
  ...
- */
+ \*/
 static __always_inline void *kmalloc(size_t size, gfp_t flags)
 {
 	if (__builtin_constant_p(size)) {
