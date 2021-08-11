@@ -3,9 +3,8 @@ Okay so here is the stuff I've done as a university student and that I'm more or
 
 
 
-## 1. [kmalloc]
-(https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L542)
-
+## 1. [kmalloc](https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L542)
+```
 /**
  \* kmalloc - allocate memory
  \* @size: how many bytes of memory are required.
@@ -36,29 +35,28 @@ static __always_inline void *kmalloc(size_t size, gfp_t flags)
 	}
 	return __kmalloc(size, flags);
 }
-
-## 1.1. [zram_bvec_read](https://elixir.bootlin.com/linux/v4.2/source/drivers/block/zram/zram_drv.c#L595)   
-```  
-static int zram_bvec_read(struct zram *zram, struct bio_vec *bvec,
-			  u32 index, int offset)
+```
+## 2.1. [__kmalloc\[SLUB\]](https://elixir.bootlin.com/linux/v5.13.7/source/mm/slub.c#L4037)
+```
+void *__kmalloc(size_t size, gfp_t flags)
 {
-	...
-	page = bvec->bv_page;
-	...
-	if (is_partial_io(bvec))
-		/* Use  a temporary buffer to decompress the page */
-		uncmem = kmalloc(PAGE_SIZE, GFP_NOIO);
-​
-	user_mem = kmap_atomic(page);
-	...
-	ret = zram_decompress_page(zram, uncmem, index);
-​
-	if (is_partial_io(bvec))
-		memcpy(user_mem + bvec->bv_offset, uncmem + offset,
-				bvec->bv_len);
-​
-	flush_dcache_page(page);
-...
+	struct kmem_cache *s;
+	void *ret;
+
+	if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
+		return kmalloc_large(size, flags);
+
+	s = kmalloc_slab(size, flags);
+
+	if (unlikely(ZERO_OR_NULL_PTR(s)))
+		return s;
+
+	ret = slab_alloc(s, flags, _RET_IP_, size);
+
+	trace_kmalloc(_RET_IP_, ret, size, s->size, flags);
+
+	ret = kasan_kmalloc(s, ret, size, flags);
+
+	return ret;
 }
 ```
-
