@@ -184,8 +184,8 @@ out:
 	return object;
 }
 ```
-# Большие размеры
-## 2.3. [kmalloc_large](https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L482)
+# Большой объем
+## 2 [kmalloc_large](https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L482)
 ```
 static __always_inline void *kmalloc_large(size_t size, gfp_t flags)
 {
@@ -193,12 +193,78 @@ static __always_inline void *kmalloc_large(size_t size, gfp_t flags)
 	return kmalloc_order_trace(size, flags, order);
 }
 ```
-## 3.
+## 3 [kmalloc_order_trace](https://elixir.bootlin.com/linux/v5.13.7/source/mm/slab_common.c#L937)
 ```
 void *kmalloc_order_trace(size_t size, gfp_t flags, unsigned int order)
 {
 	void *ret = kmalloc_order(size, flags, order);
 	trace_kmalloc(_RET_IP_, ret, size, PAGE_SIZE << order, flags);
 	return ret;
+}
+```
+## 4. [kmalloc_order](https://elixir.bootlin.com/linux/v5.13.7/source/mm/slab_common.c#L914)
+```
+/*
+ * To avoid unnecessary overhead, we pass through large allocation requests
+ * directly to the page allocator. We use __GFP_COMP, because we will need to
+ * know the allocation order to free the pages properly in kfree.
+ */
+void *kmalloc_order(size_t size, gfp_t flags, unsigned int order)
+{
+	void *ret = NULL;
+	struct page *page;
+
+	if (unlikely(flags & GFP_SLAB_BUG_MASK))
+		flags = kmalloc_fix_flags(flags);
+
+	flags |= __GFP_COMP;
+	page = alloc_pages(flags, order);
+	if (likely(page)) {
+		ret = page_address(page);
+		mod_lruvec_page_state(page, NR_SLAB_UNRECLAIMABLE_B,
+				      PAGE_SIZE << order);
+	}
+	ret = kasan_kmalloc_large(ret, size, flags);
+	/* As ret might get tagged, call kmemleak hook after KASAN. */
+	kmemleak_alloc(ret, size, 1, flags);
+	return ret;
+}
+```
+## 5. [alloc_pages](https://elixir.bootlin.com/linux/v5.13.7/source/mm/mempolicy.c#L2257)
+```
+/**
+ * alloc_pages - Allocate pages.
+ * @gfp: GFP flags.
+ * @order: Power of two of number of pages to allocate.
+ *
+ * Allocate 1 << @order contiguous pages.  The physical address of the
+ * first page is naturally aligned (eg an order-3 allocation will be aligned
+ * to a multiple of 8 * PAGE_SIZE bytes).  The NUMA policy of the current
+ * process is honoured when in process context.
+ *
+ * Context: Can be called from any context, providing the appropriate GFP
+ * flags are used.
+ * Return: The page on success or NULL if allocation fails.
+ */
+struct page *alloc_pages(gfp_t gfp, unsigned order)
+{
+	struct mempolicy *pol = &default_policy;
+	struct page *page;
+
+	if (!in_interrupt() && !(gfp & __GFP_THISNODE))
+		pol = get_task_policy(current);
+
+	/*
+	 * No reference counting needed for current->mempolicy
+	 * nor system default_policy
+	 */
+	if (pol->mode == MPOL_INTERLEAVE)
+		page = alloc_page_interleave(gfp, order, interleave_nodes(pol));
+	else
+		page = __alloc_pages(gfp, order,
+				policy_node(gfp, pol, numa_node_id()),
+				policy_nodemask(gfp, pol));
+
+	return page;
 }
 ```
