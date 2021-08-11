@@ -185,7 +185,7 @@ out:
 }
 ```
 # Большой объем
-## 2 [kmalloc_large](https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L482)
+## 2. [kmalloc_large](https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L482)
 ```
 static __always_inline void *kmalloc_large(size_t size, gfp_t flags)
 {
@@ -193,7 +193,7 @@ static __always_inline void *kmalloc_large(size_t size, gfp_t flags)
 	return kmalloc_order_trace(size, flags, order);
 }
 ```
-## 3 [kmalloc_order_trace](https://elixir.bootlin.com/linux/v5.13.7/source/mm/slab_common.c#L937)
+## 3. [kmalloc_order_trace](https://elixir.bootlin.com/linux/v5.13.7/source/mm/slab_common.c#L937)
 ```
 void *kmalloc_order_trace(size_t size, gfp_t flags, unsigned int order)
 {
