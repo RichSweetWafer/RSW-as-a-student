@@ -37,5 +37,28 @@ static __always_inline void *kmalloc(size_t size, gfp_t flags)
 	return __kmalloc(size, flags);
 }
 
-## 2.1. [_kmalloc]
+## 1.1. [zram_bvec_read](https://elixir.bootlin.com/linux/v4.2/source/drivers/block/zram/zram_drv.c#L595)   
+```  
+static int zram_bvec_read(struct zram *zram, struct bio_vec *bvec,
+			  u32 index, int offset)
+{
+	...
+	page = bvec->bv_page;
+	...
+	if (is_partial_io(bvec))
+		/* Use  a temporary buffer to decompress the page */
+		uncmem = kmalloc(PAGE_SIZE, GFP_NOIO);
+​
+	user_mem = kmap_atomic(page);
+	...
+	ret = zram_decompress_page(zram, uncmem, index);
+​
+	if (is_partial_io(bvec))
+		memcpy(user_mem + bvec->bv_offset, uncmem + offset,
+				bvec->bv_len);
+​
+	flush_dcache_page(page);
+...
+}
+```
 
