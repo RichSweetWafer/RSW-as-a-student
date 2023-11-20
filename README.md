@@ -1,7 +1,4 @@
 # RSW as a student
-Okay so here is the stuff I've done as a university student.
-
-
 
 ## 1. [kmalloc](https://elixir.bootlin.com/linux/v5.13.7/source/include/linux/slab.h#L542)
 ```
